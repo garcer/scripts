@@ -1,0 +1,16 @@
+#!/bin/sh
+
+SYSFSPATH=/sys/devices/system/cpu/cpu0/cpufreq
+LEVEL=$1
+
+if test -z ${LEVEL}; then
+	cat ${SYSFSPATH}/scaling_governor
+	exit
+fi
+
+if test x"${LEVEL}" = x"?"; then
+	cat ${SYSFSPATH}/scaling_available_governors
+	exit
+fi
+
+sudo sh -c "echo ${LEVEL} > ${SYSFSPATH}/scaling_governor"
