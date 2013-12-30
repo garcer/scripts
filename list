@@ -1,0 +1,62 @@
+#!/usr/bin/env perl
+# vim: ai ts=4 sts=4 et sw=4 ft=perl tw=78
+
+use v5.10.1;
+use strict;
+use warnings;
+
+use Pod::Usage;
+use Getopt::Long;
+
+my $type = 'f';
+my $help;
+
+GetOptions(
+    't|type=s' => \$type,
+    'h|help'   => \$help,
+) || pod2usage(-verbose => 1);
+
+pod2usage(-verbose => 1) if ($help);
+pod2usage(-verbose => 1) if not $type =~ /[d|f]/;
+
+my $path = @ARGV ? "$ARGV[0]/*" : "*";
+
+print map { "$_ " if -d } glob $path and exit if $type =~ /d/;
+print map { "$_ " if -f } glob $path and exit if $type =~ /f/;
+
+__END__
+
+=head1 NAME
+
+ list - Wrapper for list content of folder based on type (file of folder)
+
+=head1 SYNOPSIS
+
+ list [options]
+
+ Options:
+
+ -help            help message
+ -type            type of content to list
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-h|--help>
+
+ Print a brief help message and exits.
+
+=item B<-t|--type>
+
+ Type of content to list, can be 'f' for file(s) or 'd' for folder(s).
+
+=back
+
+=head1 DESCRIPTION
+
+ B<This program> will read the given input file(s) and do something
+ useful with the contents thereof.
+
+=cut
+

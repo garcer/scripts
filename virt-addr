@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+
+import os
+import subprocess
+import re
+import libvirt
+from xml.etree import ElementTree
+
+conn = libvirt.openReadOnly("qemu:///system")
+
+if conn is not None:
+    for id in conn.listDomainsID():
+       dom = conn.lookupByID(id)
+       if dom is not None:
+           tree = ElementTree.fromstring(dom.XMLDesc(0))
+           tag = tree.find("devices/interface/mac")
+           if tag is not None:
+               mac = tag.get('address')
+               #print mac
+               proc = subprocess.Popen(['/usr/sbin/arp', '-na'], stdout=subprocess.PIPE)
+               output = proc.stdout.read()
+               entries = output.split('\n')
+               for e in entries:
+                   if len(e) > 0:
+                       m = re.search('\((.*?)\) at (.*?) ', e)
+                       if mac == m.group(2):
+                           print dom.name(),m.group(2),m.group(1)
+
