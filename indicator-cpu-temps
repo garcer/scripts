@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+# use w/ t420s and ubuntu Unity
+
+import os
+import gobject
+import gtk
+import appindicator
+
+timeout = 1
+indicator = None
+temp = 0.0
+
+def menu_item_callback(w,level):
+  if not w.get_active():
+    return
+  if level < 2:
+    level = 2
+  if level == 8:
+    level = 'full-speed'
+  if level == 'auto':
+    level = 'auto'
+  os.system('sudo sh -c "echo level '+ str(level) +' > /proc/acpi/ibm/fan"')
+
+def callback():
+  global temp;
+  lines = tuple(open('/sys/devices/platform/coretemp.0/temp1_input', 'r'))
+  temp = float(lines[0])/1000
+  indicator.set_label(str(temp))
+  return True
+
+if __name__ == "__main__":
+  indicator = appindicator.Indicator("showtemp",
+                                     "/home/gar/Pictures/fan.png",
+                                     appindicator.CATEGORY_APPLICATION_STATUS)
+  indicator.set_status(appindicator.STATUS_ACTIVE)
+  indicator.set_label(str(temp))
+
+  menu = gtk.Menu()
+  menu_group = gtk.RadioMenuItem()
+  for level in ['auto',2,3,4,5,7,8]:
+    menu_item = gtk.RadioMenuItem(menu_group, "Fan level: " + str(level))
+    menu.append(menu_item)
+    if 'auto' == level:
+	    menu_item.set_active(1)
+    menu_item.connect("toggled", menu_item_callback, level)
+    menu_item.show()
+
+  indicator.set_menu(menu)
+
+  gobject.timeout_add_seconds(timeout, callback)
+
+  gtk.main()
