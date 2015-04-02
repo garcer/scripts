@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# use w/ t420s and ubuntu Unity
+# use w/ t420s, ubuntu Unity, ibm acpi fan control enabled
 
-import os
-import re
-import linecache
+from os import system
+from re import sub
+from itertools import islice
 
 from gi.repository import GObject as gobject
 from gi.repository import Gtk as gtk
@@ -13,11 +13,16 @@ timeout = 1
 indicator = None
 temp = 0.0
 
+def get_line(filepath, linenumber):
+  with open(filepath) as fin:
+    for line in islice(fin, linenumber-1, linenumber):
+      return sub('\s+','', line[6:])
+
 def get_current_fan_level():
-  return re.sub('\s+','',linecache.getline('/proc/acpi/ibm/fan',3))[6:]
+  return get_line('/proc/acpi/ibm/fan', 3)
 
 def get_current_fan_speed():
-  return re.sub('\s+','',linecache.getline('/proc/acpi/ibm/fan',2))[6:]
+  return get_line('/proc/acpi/ibm/fan', 2)
 
 def menu_item_callback(w,level):
   if not w.get_active():
@@ -28,14 +33,16 @@ def menu_item_callback(w,level):
     level = 'full-speed'
   if level == 'auto':
     level = 'auto'
+
   # FIXME: get permissions
-  os.system('sudo sh -c "echo level '+ str(level) +' > /proc/acpi/ibm/fan"')
+  system('sudo sh -c "echo level '+ str(level) +' > /proc/acpi/ibm/fan"')
 
 def callback():
   global temp;
   lines = tuple(open('/sys/devices/platform/coretemp.0/hwmon/hwmon1/temp1_input', 'r'))
   temp = float(lines[0])/1000
-  indicator.set_label(str(temp) + " " + get_current_fan_speed(), "^C")
+  speed = get_current_fan_speed()
+  indicator.set_label(str(temp) + " " + speed, "^C")
   return True
 
 if __name__ == "__main__":
