@@ -35,8 +35,7 @@ if __name__ == "__main__":
                                          "showtemp",
                                          appindicator.IndicatorCategory.HARDWARE)
   indicator.set_icon_theme_path("/usr/share/icons")
-  #self.set_icon(get_data_file('media', 'indicator-cpufreq.png'))
-  #indicator.set_icon('indicator-cpufreq')
+  indicator.set_icon('tray-online')
 
   indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
   indicator.set_label(str(temp), "RPM")
