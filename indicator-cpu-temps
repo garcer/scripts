@@ -2,6 +2,8 @@
 # use w/ t420s and ubuntu Unity
 
 import os
+import re
+import linecache
 
 from gi.repository import GObject as gobject
 from gi.repository import Gtk as gtk
@@ -10,6 +12,12 @@ from gi.repository import AppIndicator3 as appindicator
 timeout = 1
 indicator = None
 temp = 0.0
+
+def get_current_fan_level():
+  return re.sub('\s+','',linecache.getline('/proc/acpi/ibm/fan',3))[6:]
+
+def get_current_fan_speed():
+  return re.sub('\s+','',linecache.getline('/proc/acpi/ibm/fan',2))[6:]
 
 def menu_item_callback(w,level):
   if not w.get_active():
@@ -27,7 +35,7 @@ def callback():
   global temp;
   lines = tuple(open('/sys/devices/platform/coretemp.0/hwmon/hwmon1/temp1_input', 'r'))
   temp = float(lines[0])/1000
-  indicator.set_label(str(temp), "RPM")
+  indicator.set_label(str(temp) + " " + get_current_fan_speed(), "^C")
   return True
 
 if __name__ == "__main__":
@@ -38,17 +46,22 @@ if __name__ == "__main__":
   indicator.set_icon('tray-online')
 
   indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
-  indicator.set_label(str(temp), "RPM")
+  indicator.set_label(str(temp) + " " + get_current_fan_speed(), "^C")
+
+  # get current level
+  current_level = int(get_current_fan_level())
 
   menu = gtk.Menu()
   menu_group = []
- 
+
   for level in ['auto',2,3,4,5,7,8]:
-    menu_item = gtk.RadioMenuItem.new_with_label(menu_group, "Fan level: " + str(level))
+    menu_item = gtk.RadioMenuItem.new_with_label(menu_group,"Fan level: " + str(level))
     menu_group = menu_item.get_group()
     menu.append(menu_item)
-    if 'auto' == level:
-	    menu_item.set_active(1)
+
+    if current_level == level:
+      menu_item.set_active(1)
+
     menu_item.connect("toggled", menu_item_callback, level)
     menu_item.show()
 
