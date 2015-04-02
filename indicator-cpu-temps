@@ -2,9 +2,10 @@
 # use w/ t420s and ubuntu Unity
 
 import os
-import gobject
-import gtk
-import appindicator
+
+from gi.repository import GObject as gobject
+from gi.repository import Gtk as gtk
+from gi.repository import AppIndicator3 as appindicator
 
 timeout = 1
 indicator = None
@@ -19,26 +20,33 @@ def menu_item_callback(w,level):
     level = 'full-speed'
   if level == 'auto':
     level = 'auto'
+  # FIXME: get permissions
   os.system('sudo sh -c "echo level '+ str(level) +' > /proc/acpi/ibm/fan"')
 
 def callback():
   global temp;
-  lines = tuple(open('/sys/devices/platform/coretemp.0/temp1_input', 'r'))
+  lines = tuple(open('/sys/devices/platform/coretemp.0/hwmon/hwmon1/temp1_input', 'r'))
   temp = float(lines[0])/1000
-  indicator.set_label(str(temp))
+  indicator.set_label(str(temp), "RPM")
   return True
 
 if __name__ == "__main__":
-  indicator = appindicator.Indicator("showtemp",
-                                     "/home/gar/Pictures/fan.png",
-                                     appindicator.CATEGORY_APPLICATION_STATUS)
-  indicator.set_status(appindicator.STATUS_ACTIVE)
-  indicator.set_label(str(temp))
+  indicator = appindicator.Indicator.new("showtemp",
+                                         "showtemp",
+                                         appindicator.IndicatorCategory.HARDWARE)
+  indicator.set_icon_theme_path("/usr/share/icons")
+  #self.set_icon(get_data_file('media', 'indicator-cpufreq.png'))
+  #indicator.set_icon('indicator-cpufreq')
+
+  indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
+  indicator.set_label(str(temp), "RPM")
 
   menu = gtk.Menu()
-  menu_group = gtk.RadioMenuItem()
+  menu_group = []
+ 
   for level in ['auto',2,3,4,5,7,8]:
-    menu_item = gtk.RadioMenuItem(menu_group, "Fan level: " + str(level))
+    menu_item = gtk.RadioMenuItem.new_with_label(menu_group, "Fan level: " + str(level))
+    menu_group = menu_item.get_group()
     menu.append(menu_item)
     if 'auto' == level:
 	    menu_item.set_active(1)
